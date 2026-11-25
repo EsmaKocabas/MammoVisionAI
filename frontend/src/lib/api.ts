@@ -162,6 +162,7 @@ export const getMe = () =>
 export interface UpdateProfileData {
   email?: string;
   full_name?: string;
+  tc_no?: string;
   title?: string;
   specialty?: string;
   hospital?: string;

@@ -50,6 +50,7 @@ export default function DoctorProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [isTcNoSaved, setIsTcNoSaved] = useState(false);
 
   useEffect(() => {
     getMe().then((res) => {
@@ -64,6 +65,7 @@ export default function DoctorProfilePage() {
           phone: res.doctor.phone || '',
           email: res.doctor.email || '',
         });
+        setIsTcNoSaved(Boolean(res.doctor.tc_no));
       }
     }).catch(() => undefined);
   }, [setDoctor]);
@@ -154,6 +156,7 @@ export default function DoctorProfilePage() {
       const payload: UpdateProfileData = {
         email: emailTrimmed,
         full_name: nameTrimmed,
+        tc_no: formData.tc_no.trim(),
         title: titleTrimmed,
         specialty: specialtyTrimmed,
         hospital: hospitalTrimmed,
@@ -166,6 +169,7 @@ export default function DoctorProfilePage() {
       if (res.token) {
         updateStoredToken(res.token);
       }
+      setIsTcNoSaved(Boolean(res.doctor.tc_no));
       const okMsg = 'Profil bilgileriniz başarıyla güncellendi.';
       setSuccessMsg(okMsg);
       showToast('Profil Güncellendi', okMsg, 'success');
@@ -332,17 +336,33 @@ export default function DoctorProfilePage() {
                 />
               </div>
 
-              {/* TC Kimlik No (Değiştirilemez) */}
-              <div className="form-group">
-                <label htmlFor="prof-tc">TC Kimlik No (Değiştirilemez)</label>
-                <input
-                  id="prof-tc"
-                  type="text"
-                  value={formData.tc_no || 'Belirtilmemiş'}
-                  disabled
-                  style={{ background: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
-                />
-              </div>
+                {/* TC Kimlik No */}
+            <div className="form-group">
+              <label htmlFor="prof-tc">
+                    TC Kimlik No
+                    {isTcNoSaved && (
+                      <span style={{ marginLeft: '6px' }}>(Değiştirilemez)</span>
+                    )}
+                  </label>
+
+                  <input
+                    id="prof-tc"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="11 haneli TC Kimlik Numaranız"
+                    value={formData.tc_no}
+                    disabled={isTcNoSaved}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 11);
+                      setFormData((prev) => ({ ...prev, tc_no: value }));
+                    }}
+                  />
+
+                  {!isTcNoSaved && (
+                    <small>TC kimlik numaranızı 11 haneli olarak girebilirsiniz.</small>
+                  )}
+            </div>  
 
               {/* E-posta */}
               <div className="form-group">
