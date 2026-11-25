@@ -217,7 +217,8 @@ export default function AppLayout() {
 
   const handleLogout = () => {
     clearSession();
-    navigate('/login', { replace: true });
+    setDoctor(null);
+    window.location.href = '/login';
   };
 
   // İsimden baş harfleri türet (örn. "Aylin Yalçın" -> "AY")
@@ -258,7 +259,7 @@ export default function AppLayout() {
             <HeartPulse size={22} strokeWidth={2.2} />
           </div>
           <div className="sidebar-brand-text">
-            <span className="sidebar-brand-title">MammoAI</span>
+            <span className="sidebar-brand-title">MammoVisionAI</span>
             <span className="sidebar-brand-subtitle">KLİNİK KARAR DESTEĞİ</span>
           </div>
         </div>

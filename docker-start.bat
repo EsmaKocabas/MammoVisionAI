@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ========================================================
-echo  MammoXAI - Docker ile Tum Servisleri Baslatma (Windows)
+echo  MammoVisionAI - Docker ile Tum Servisleri Baslatma (Windows)
 echo ========================================================
 echo.
 

@@ -228,7 +228,7 @@ export default function DashboardPage() {
     setAnalysisStepText('Mamografi görüntüsü sunucuya iletiliyor...');
 
     const stepTimer = setTimeout(() => {
-      setAnalysisStepText('EfficientNet-B4 derin öğrenme modeli ve Grad-CAM++ açıklanabilirlik haritası hesaplanıyor...');
+      setAnalysisStepText('EfficientNet-B4 derin öğrenme modeli ve Grad-CAM++ ısı haritası hesaplanıyor...');
     }, 1800);
 
     try {
@@ -509,7 +509,7 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="modal-header-title">Yeni Mamografi Analizi</h3>
                   <p className="modal-header-subtitle">
-                    Yapay Zeka (EfficientNet-B4) & Grad-CAM++ Açıklanabilir Karar Desteği
+                    Yapay Zeka (EfficientNet-B4) & Grad-CAM++ Görsel Karar Desteği
                   </p>
                 </div>
               </div>

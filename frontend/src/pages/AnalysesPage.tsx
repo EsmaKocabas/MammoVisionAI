@@ -58,7 +58,7 @@ export default function AnalysesPage() {
         <div>
           <h1 className="page-title">Mamografi Analizleri & AI Karar Desteği</h1>
           <p style={{ margin: '4px 0 0', fontSize: 13.5, color: '#64748b' }}>
-            EfficientNet-B4 derin öğrenme ve Grad-CAM++ açıklanabilir yapay zeka sonuçları
+            EfficientNet-B4 derin öğrenme ve Grad-CAM++ görsel ısı haritası analiz sonuçları
           </p>
         </div>
 
@@ -214,7 +214,7 @@ export default function AnalysesPage() {
         </div>
       </div>
 
-      {/* Analiz ve XAI Detay Modalı */}
+      {/* Analiz ve Grad-CAM++ Detay Modalı */}
       {selectedAnalysis && (
         <div className="modal-overlay" onClick={() => setSelectedAnalysis(null)}>
           <div className="modal-card" style={{ maxWidth: 640 }} onClick={(e) => e.stopPropagation()}>
@@ -284,14 +284,14 @@ export default function AnalysesPage() {
                 </div>
               </div>
 
-              {selectedAnalysis.xai_explanation && (
+              {selectedAnalysis.gradcam_explanation && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>
                     <Layers size={16} color="#00766c" />
-                    <span>Grad-CAM++ Açıklanabilirlik Bulguları:</span>
+                    <span>Grad-CAM++ Görsel Odak Bulguları:</span>
                   </div>
                   <p style={{ margin: 0, color: '#475569', lineHeight: 1.5, background: '#fff', border: '1px solid #e2e8f0', padding: 12, borderRadius: 10 }}>
-                    {selectedAnalysis.xai_explanation}
+                    {selectedAnalysis.gradcam_explanation}
                   </p>
                 </div>
               )}

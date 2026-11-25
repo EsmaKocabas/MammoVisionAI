@@ -59,6 +59,40 @@ export const initDatabase = async (): Promise<void> => {
         ON notifications (created_at DESC);
     `);
 
+    // Geriye dönük kolon uyumluluğu: xai_* -> gradcam_*
+    await pool.query(`
+      DO $$ 
+      BEGIN 
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='analyses' AND column_name='xai_heatmap_url'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='analyses' AND column_name='gradcam_heatmap_url'
+        ) THEN
+          ALTER TABLE analyses RENAME COLUMN xai_heatmap_url TO gradcam_heatmap_url;
+        END IF;
+
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='analyses' AND column_name='xai_explanation'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='analyses' AND column_name='gradcam_explanation'
+        ) THEN
+          ALTER TABLE analyses RENAME COLUMN xai_explanation TO gradcam_explanation;
+        END IF;
+
+        -- Kan grubu alanı uzunluğunu AB Rh+ (6 karakter) için en az 10 karaktere genişlet
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name='patients' AND column_name='blood_type' AND character_maximum_length < 10
+        ) THEN
+          ALTER TABLE patients ALTER COLUMN blood_type TYPE VARCHAR(10);
+        END IF;
+      END $$;
+    `);
+
     console.log('[Database] Tablolar kontrol edildi.');
   } catch (error) {
     console.error('[Database Init Error]:', error);

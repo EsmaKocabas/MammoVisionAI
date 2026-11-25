@@ -11,7 +11,7 @@ from fastapi.concurrency import run_in_threadpool
 from torchvision import models, transforms
 from PIL import Image
 
-app = FastAPI(title="MammoXAI Model API", version="1.1.0")
+app = FastAPI(title="MammoVisionAI Model API", version="1.1.0")
 
 # 1. Cihaz Belirleme
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,7 +57,7 @@ WEIGHTS_PATH = os.path.join(MODEL_DIR, "efficientnet_b4_binary_final_best.pth")
 MODEL_READY = False
 
 if os.path.exists(WEIGHTS_PATH):
-    print(f"[MammoXAI] Model ağırlıkları yükleniyor: {WEIGHTS_PATH}")
+    print(f"[MammoVisionAI] Model ağırlıkları yükleniyor: {WEIGHTS_PATH}")
     model.load_state_dict(torch.load(WEIGHTS_PATH, map_location=device))
     model.to(device)
     model.eval()  # Çıkarım (inference) modu
@@ -65,9 +65,9 @@ if os.path.exists(WEIGHTS_PATH):
     for p in model.parameters():
         p.requires_grad_(False)
     MODEL_READY = True
-    print("[MammoXAI] Model başarıyla yüklendi ve hazır.")
+    print("[MammoVisionAI] Model başarıyla yüklendi ve hazır.")
 else:
-    print(f"[MammoXAI UYARI] Ağırlık dosyası bulunamadı: {WEIGHTS_PATH}")
+    print(f"[MammoVisionAI UYARI] Ağırlık dosyası bulunamadı: {WEIGHTS_PATH}")
 
 # 5. Ön İşlem ve Test Transformları
 # val_transforms = [MedicalROIEnhancer, Resize, ToTensor, Normalize] ile birebir aynı;
@@ -177,7 +177,7 @@ def run_analysis(image: Image.Image) -> dict:
             "non_malignant": round(probs[0].item() * 100, 2),
             "malignant": round(probs[1].item() * 100, 2)
         },
-        "xai": {
+        "gradcam": {
             "method": "Grad-CAM++",
             "target_class": class_names[target_class],
             "target_layer": "features[-1]",
@@ -191,7 +191,7 @@ def run_analysis(image: Image.Image) -> dict:
 @app.get("/")
 def read_root():
     return {
-        "service": "MammoXAI AI Model Service",
+        "service": "MammoVisionAI AI Model Service",
         "status": "ready" if MODEL_READY else "weights_missing",
         "device": str(device)
     }

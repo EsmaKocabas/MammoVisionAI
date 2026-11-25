@@ -26,7 +26,10 @@ const createPatientSchema = z.object({
   phone: z.string().trim().min(1, 'Telefon numarası boş bırakılamaz.').max(20),
   email: z.string().trim().email('Geçerli bir e-posta adresi giriniz.'),
   address: z.string().trim().min(1, 'Adres bilgisi boş bırakılamaz.'),
-  blood_type: z.string().trim().min(1, 'Kan grubu boş bırakılamaz.').max(5),
+  blood_type: z.enum(
+    ['A Rh+', 'A Rh-', 'B Rh+', 'B Rh-', 'AB Rh+', 'AB Rh-', '0 Rh+', '0 Rh-'],
+    { message: 'Geçerli bir kan grubu seçiniz (Örn: A Rh+, B Rh-).' }
+  ),
   allergies: z.string().trim().min(1, 'Alerji bilgisi boş bırakılamaz (Alerji yoksa "Yok" yazınız).'),
   chronic_diseases: z.string().trim().min(1, 'Kronik hastalık bilgisi boş bırakılamaz (Hastalık yoksa "Yok" yazınız).'),
   family_history_of_cancer: z.boolean({ message: 'Ailede kanser geçmişi seçimi zorunludur.' }),
@@ -186,7 +189,7 @@ export const deletePatient = async (req: AuthRequest, res: Response): Promise<vo
 
   // Hastaya ait silinecek tüm mamografi ve ısı haritası dosyalarını topla
   const filesQuery = await pool.query(
-    `SELECT i.storage_url, a.xai_heatmap_url
+    `SELECT i.storage_url, a.gradcam_heatmap_url
      FROM mammography_images i
      LEFT JOIN analyses a ON a.image_id = i.id
      WHERE i.patient_id = $1`,
@@ -214,8 +217,8 @@ export const deletePatient = async (req: AuthRequest, res: Response): Promise<vo
       const p = path.join(UPLOADS_DIR, row.storage_url.replace(/^\/uploads\//, ''));
       await fs.unlink(p).catch(() => undefined);
     }
-    if (row.xai_heatmap_url) {
-      const p = path.join(UPLOADS_DIR, row.xai_heatmap_url.replace(/^\/uploads\//, ''));
+    if (row.gradcam_heatmap_url) {
+      const p = path.join(UPLOADS_DIR, row.gradcam_heatmap_url.replace(/^\/uploads\//, ''));
       await fs.unlink(p).catch(() => undefined);
     }
   }

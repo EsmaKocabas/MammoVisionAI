@@ -1,7 +1,20 @@
 // Backend ile iletişim + oturum (token) yönetimi
 
-const TOKEN_KEY = 'mammoai_token';
-const DOCTOR_KEY = 'mammoai_doctor';
+const TOKEN_KEY = 'mammovisionai_token';
+const DOCTOR_KEY = 'mammovisionai_doctor';
+
+const REMEMBER_EMAIL_KEY = 'mammovisionai_remembered_email';
+
+export const getRememberedEmail = () =>
+  localStorage.getItem(REMEMBER_EMAIL_KEY) || '';
+
+export const saveRememberedEmail = (email: string, remember: boolean) => {
+  if (remember) {
+    localStorage.setItem(REMEMBER_EMAIL_KEY, email.trim());
+  } else {
+    localStorage.removeItem(REMEMBER_EMAIL_KEY);
+  }
+};
 
 export interface Doctor {
   id: string;
@@ -34,10 +47,17 @@ export const saveSession = (token: string, doctor: Doctor, remember: boolean) =>
 };
 
 export const getToken = (): string | null =>
-  localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+  localStorage.getItem(TOKEN_KEY) ??
+  sessionStorage.getItem(TOKEN_KEY) ??
+  localStorage.getItem('mammoai_token') ??
+  sessionStorage.getItem('mammoai_token');
 
 export const getDoctor = (): Doctor | null => {
-  const raw = localStorage.getItem(DOCTOR_KEY) ?? sessionStorage.getItem(DOCTOR_KEY);
+  const raw =
+    localStorage.getItem(DOCTOR_KEY) ??
+    sessionStorage.getItem(DOCTOR_KEY) ??
+    localStorage.getItem('mammoai_doctor') ??
+    sessionStorage.getItem('mammoai_doctor');
   try {
     return raw ? (JSON.parse(raw) as Doctor) : null;
   } catch {
@@ -67,6 +87,10 @@ export const clearSession = () => {
   for (const storage of [localStorage, sessionStorage]) {
     storage.removeItem(TOKEN_KEY);
     storage.removeItem(DOCTOR_KEY);
+    storage.removeItem('mammoai_token');
+    storage.removeItem('mammoai_doctor');
+    storage.removeItem('mammovisionai_token');
+    storage.removeItem('mammovisionai_doctor');
   }
 };
 
@@ -246,8 +270,8 @@ export interface AnalysisItem {
   model_confidence: number | null;
   classification_model?: string;
   model_version?: string;
-  xai_heatmap_url?: string | null;
-  xai_explanation?: string | null;
+  gradcam_heatmap_url?: string | null;
+  gradcam_explanation?: string | null;
   doctor_notes?: string | null;
   final_decision?: string | null;
   is_reviewed: boolean;

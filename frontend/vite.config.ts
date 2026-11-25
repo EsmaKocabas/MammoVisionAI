@@ -1,11 +1,12 @@
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
-// Docker'da backend service adı "backend", lokalde ise "localhost"
-const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:5001';
+// Docker içinde backend servis adına bağlan
+const backendUrl =
+  process.env.VITE_BACKEND_URL || 'http://backend:5001';
 
-// Geliştirmede /api ve /uploads isteklerini backend'e yönlendir
 export default defineConfig({
   plugins: [
     tailwindcss(),
@@ -13,13 +14,19 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: true, // Docker container içinden erişilebilir (0.0.0.0)
+    host: '0.0.0.0',
     proxy: {
-      '/api': backendUrl,
-      '/uploads': backendUrl,
+      '/api': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
     },
     watch: {
-      usePolling: true, // Docker bind mount için gerekli (özellikle Windows/Mac)
+      usePolling: true,
     },
   },
 });

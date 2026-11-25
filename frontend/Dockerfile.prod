@@ -1,5 +1,5 @@
 # ============================================================
-# MammoXAI – Frontend Production Build (Nginx)
+# MammoVisionAI – Frontend Production Build (Nginx)
 # ============================================================
 FROM node:22-alpine AS builder
 

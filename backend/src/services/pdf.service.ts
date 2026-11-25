@@ -14,8 +14,8 @@ interface ReportData {
     model_confidence: string | number | null;
     classification_model: string | null;
     model_version: string | null;
-    xai_heatmap_url: string | null;
-    xai_explanation: string | null;
+    gradcam_heatmap_url?: string | null;
+    gradcam_explanation?: string | null;
     doctor_notes: string | null;
     final_decision: string | null;
     is_reviewed: boolean;
@@ -54,8 +54,8 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
       size: 'A4',
       margin: 40,
       info: {
-        Title: `MammoXai Raporu - ${data.analysis.protocol_no}`,
-        Author: 'MammoXai AI Sistemi',
+        Title: `MammoVisionAI Raporu - ${data.analysis.protocol_no}`,
+        Author: 'MammoVisionAI AI Sistemi',
         Subject: 'Mamografi Analiz ve Karar Destek Raporu',
       },
     });
@@ -95,8 +95,8 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
 
     // ─── Header & Logo ───
     doc.rect(40, 40, 515, 55).fill('#0f172a'); // Koyu lacivert başlık bandı
-    doc.fillColor('#ffffff').font(fontBold).fontSize(18).text('MAMMOXAI', 55, 52);
-    doc.font(fontRegular).fontSize(9).fillColor('#94a3b8').text('Yapay Zeka Destekli Mamografi Analiz ve XAI Raporu', 55, 74);
+    doc.fillColor('#ffffff').font(fontBold).fontSize(18).text('MAMMOVISIONAI', 55, 52);
+    doc.font(fontRegular).fontSize(9).fillColor('#94a3b8').text('Yapay Zeka Destekli Mamografi Analiz ve Grad-CAM++ Raporu', 55, 74);
 
     doc.font(fontBold).fontSize(10).fillColor('#38bdf8').text(`Protokol: ${analysis.protocol_no}`, 370, 52, { align: 'right', width: 170 });
     const reportDate = analysis.completed_at ? new Date(analysis.completed_at).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR');
@@ -129,7 +129,7 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
     const doctorTitle = [doctor.title, doctor.full_name].filter(Boolean).join(' ');
     doc.text(`Hekim: ${doctorTitle}`, rightBoxX + 10, currentY + 28);
     doc.text(`Uzmanlık: ${doctor.specialty || 'Radyoloji / Genel Cerrahi'}`, rightBoxX + 10, currentY + 44);
-    doc.text(`Hastane: ${doctor.hospital || 'MammoXai Tıp Merkezi'}`, rightBoxX + 10, currentY + 60);
+    doc.text(`Hastane: ${doctor.hospital || 'MammoVisionAI Tıp Merkezi'}`, rightBoxX + 10, currentY + 60);
 
     currentY += 100;
 
@@ -160,13 +160,13 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
     const conf = analysis.model_confidence !== null ? `%${(Number(analysis.model_confidence) * 100).toFixed(1)}` : '-';
     doc.font(fontRegular).text(conf, 180, currentY + 68);
 
-    doc.font(fontBold).text('Kullanılan Model & XAI:', 55, currentY + 84);
+    doc.font(fontBold).text('Kullanılan Model & Yöntem:', 55, currentY + 84);
     doc.font(fontRegular).text(`${analysis.classification_model || 'EfficientNet-B4'} | Grad-CAM++ Isı Haritası`, 180, currentY + 84);
 
     currentY += 120;
 
     // ─── Görüntüler (Orijinal Mamografi & Grad-CAM++ Isı Haritası) ───
-    doc.font(fontBold).fontSize(10).fillColor('#0f172a').text('GÖRSEL İNCELEME & AÇIKLANABİLİR YAPAY ZEKA (XAI)', 40, currentY);
+    doc.font(fontBold).fontSize(10).fillColor('#0f172a').text('GÖRSEL İNCELEME & GRAD-CAM++ ISI HARİTASI', 40, currentY);
     currentY += 16;
 
     const imgWidth = 245;
@@ -194,8 +194,9 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
 
     // Isı Haritası
     let heatmapRendered = false;
-    if (analysis?.xai_heatmap_url) {
-      const relativePath = analysis.xai_heatmap_url.replace(/^\/uploads\//, '');
+    const heatmapUrl = analysis?.gradcam_heatmap_url;
+    if (heatmapUrl) {
+      const relativePath = heatmapUrl.replace(/^\/uploads\//, '');
       const fullPath = path.join(UPLOADS_DIR, relativePath);
       if (fs.existsSync(fullPath)) {
         try {
@@ -236,7 +237,7 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
     // ─── Footer / Yasal Uyarı ───
     doc.rect(40, 780, 515, 0.5).fill('#cbd5e1');
     doc.font(fontRegular).fontSize(7).fillColor('#94a3b8').text(
-      'YASAL UYARI: Bu rapor MammoXai yapay zeka karar destek sistemi tarafından üretilmiştir. Kesin tanı yerine geçmez; sonuçlar uzman hekim tarafından klinik bulgular ve biyopsi/tetkiklerle birlikte değerlendirilmelidir.',
+      'YASAL UYARI: Bu rapor MammoVisionAI yapay zeka karar destek sistemi tarafından üretilmiştir. Kesin tanı yerine geçmez; sonuçlar uzman hekim tarafından klinik bulgular ve biyopsi/tetkiklerle birlikte değerlendirilmelidir.',
       40,
       787,
       { align: 'center', width: 515 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ========================================================
-#  MammoXAI - Docker ile Tüm Servisleri Başlatma (Mac / Linux)
+#  MammoVisionAI - Docker ile Tüm Servisleri Başlatma (Mac / Linux)
 # ========================================================
 
 set -e
@@ -8,7 +8,7 @@ set -e
 cd "$(dirname "$0")"
 
 echo "========================================================"
-echo " MammoXAI - Docker Servisleri Başlatılıyor (Mac / Linux)"
+echo " MammoVisionAI - Docker Servisleri Başlatılıyor (Mac / Linux)"
 echo "========================================================"
 echo ""
 

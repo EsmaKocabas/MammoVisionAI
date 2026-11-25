@@ -58,14 +58,14 @@ app.get('/health', async (_req: Request, res: Response) => {
 
     res.json({
       status: 'ok',
-      service: 'MammoXai Backend API',
+      service: 'MammoVisionAI Backend API',
       database: 'connected',
       timestamp: dbRes.rows[0].current_time,
     });
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      service: 'MammoXai Backend API',
+      service: 'MammoVisionAI Backend API',
       database: 'disconnected',
       error: error instanceof Error ? error.message : 'Bilinmeyen hata',
     });
@@ -75,7 +75,7 @@ app.get('/health', async (_req: Request, res: Response) => {
 // Ana karşılama rotası
 app.get('/', (_req: Request, res: Response) => {
   res.json({
-    message: 'MammoXai API Servisi Aktif',
+    message: 'MammoVisionAI API Servisi Aktif',
     version: '1.0.0',
     endpoints: {
       health: '/health',
@@ -116,7 +116,7 @@ async function startServer() {
 
     app.listen(PORT, '0.0.0.0', () => {
       console.log(
-        `[Server] MammoXai API ${PORT} portunda çalışıyor.`
+        `[Server] MammoVisionAI API ${PORT} portunda çalışıyor.`
       );
     });
   } catch (error) {
