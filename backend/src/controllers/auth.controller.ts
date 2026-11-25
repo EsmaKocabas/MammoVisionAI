@@ -251,6 +251,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
 
     const {
       email,
+      tc_no,
       full_name,
       title,
       specialty,
@@ -262,6 +263,62 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     } = req.body;
 
     const updates: Record<string, any> = {};
+
+    // TC Kimlik No: İlk kez girilebilir, sonradan değiştirilemez.
+const currentDoctorResult = await pool.query(
+  'SELECT tc_no FROM doctors WHERE id = $1',
+  [doctorId]
+);
+
+if (currentDoctorResult.rows.length === 0) {
+  res.status(404).json({ error: 'Doktor bulunamadı.' });
+  return;
+}
+
+const existingTc = currentDoctorResult.rows[0].tc_no;
+
+// İstek içerisinde TC numarası gönderilmişse kontrol et.
+if (tc_no !== undefined && tc_no !== null && tc_no !== '') {
+  if (typeof tc_no !== 'string') {
+    res.status(400).json({ error: 'Geçersiz TC Kimlik No.' });
+    return;
+  }
+
+  const cleanTc = tc_no.trim();
+
+  // Daha önce TC kaydedilmişse değiştirilmesine izin verme.
+  if (existingTc) {
+    if (cleanTc !== existingTc) {
+      res.status(400).json({
+        error: 'TC Kimlik numaranız daha önce kaydedildiği için değiştirilemez.',
+      });
+      return;
+    }
+  } else {
+    // İlk kez TC giriliyorsa format kontrolü yap.
+    if (!/^[1-9]\d{10}$/.test(cleanTc)) {
+      res.status(400).json({
+        error: 'TC Kimlik No 11 haneli olmalı, 0 ile başlamamalı ve yalnızca rakamlardan oluşmalıdır.',
+      });
+      return;
+    }
+
+    // Başka doktora ait olup olmadığını kontrol et.
+    const duplicateTc = await pool.query(
+      'SELECT id FROM doctors WHERE tc_no = $1 AND id != $2',
+      [cleanTc, doctorId]
+    );
+
+    if (duplicateTc.rows.length > 0) {
+      res.status(409).json({
+        error: 'Bu TC Kimlik No başka bir doktor tarafından kullanılmaktadır.',
+      });
+      return;
+    }
+
+    updates.tc_no = cleanTc;
+  }
+}
 
     // E-posta değiştirme kontrolü
     if (email !== undefined) {
