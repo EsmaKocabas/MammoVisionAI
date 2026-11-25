@@ -1,6 +1,6 @@
-# MammoXAI - Klinik Karar Destek Sistemi (XAI Destekli Mamografi Analizi)
+# MammoVisionAI - Klinik Karar Destek Sistemi (Grad-CAM++ Destekli Mamografi Analizi)
 
-MammoXAI, derin öğrenme (EfficientNet-B4) ve Açıklanabilir Yapay Zeka (Grad-CAM++) tekniklerini kullanarak mamografi görüntülerinden meme kanseri riskini analiz eden tam kapsamlı bir klinik karar destek platformudur.
+MammoVisionAI, derin öğrenme (EfficientNet-B4) ve Grad-CAM++ ısı haritası görsel odak analizi tekniklerini kullanarak mamografi görüntülerinden meme kanseri riskini analiz eden tam kapsamlı bir klinik karar destek platformudur.
 
 ---
 

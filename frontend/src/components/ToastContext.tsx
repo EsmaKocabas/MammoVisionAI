@@ -36,7 +36,7 @@ export const LOCAL_NOTIF_PREFIX = 'local-';
 // Her doktorun yerel bildirimleri ayrı anahtarda tutulur
 const storageKey = () => {
   const doctorId = getDoctor()?.id;
-  return doctorId ? `mammoai_local_notifications_${doctorId}` : null;
+  return doctorId ? `mammovisionai_local_notifications_${doctorId}` : null;
 };
 
 const readLocal = (): AppNotification[] => {

@@ -8,8 +8,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Save,
-  Eye,
-  EyeOff,
+  KeyRound,
 } from 'lucide-react';
 import {
   getMe,
@@ -26,26 +25,6 @@ import '../styles/dashboard.css';
 
 // Yalnızca harfler ve boşluk kontrolü (Türkçe karakterler dahil)
 const LETTERS_ONLY_REGEX = /^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$/;
-
-// Şifre doğrulama kuralları (backend ile tam uyumlu)
-const validatePasswordStrict = (password: string): { valid: boolean; message?: string } => {
-  if (password.length < 8) {
-    return { valid: false, message: 'Şifre en az 8 karakter uzunluğunda olmalıdır.' };
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { valid: false, message: 'Şifre en az bir büyük harf (A-Z) içermelidir.' };
-  }
-  if (!/[a-z]/.test(password)) {
-    return { valid: false, message: 'Şifre en az bir küçük harf (a-z) içermelidir.' };
-  }
-  if (!/[0-9]/.test(password)) {
-    return { valid: false, message: 'Şifre en az bir sayı (0-9) içermelidir.' };
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    return { valid: false, message: 'Şifre en az bir noktalama işareti veya özel karakter içermelidir.' };
-  }
-  return { valid: true };
-};
 
 export default function DoctorProfilePage() {
   const navigate = useNavigate();
@@ -64,17 +43,6 @@ export default function DoctorProfilePage() {
     phone: '',
     email: '',
   });
-
-  const [passwords, setPasswords] = useState({
-    current_password: '',
-    new_password: '',
-    new_password_confirm: '',
-  });
-
-  // Şifre görünürlük durumları
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -181,38 +149,6 @@ export default function DoctorProfilePage() {
       return;
     }
 
-    // 7. Şifre değiştirme talebi kontrolü
-    if (passwords.new_password || passwords.current_password) {
-      if (!passwords.current_password) {
-        const err = 'Şifrenizi değiştirmek için mevcut şifrenizi girmelisiniz.';
-        setErrorMsg(err);
-        showToast('Şifre Hatası', err, 'error');
-        return;
-      }
-
-      if (!passwords.new_password) {
-        const err = 'Lütfen yeni şifrenizi belirleyin.';
-        setErrorMsg(err);
-        showToast('Şifre Hatası', err, 'error');
-        return;
-      }
-
-      if (passwords.new_password !== passwords.new_password_confirm) {
-        const err = 'Yeni şifreler birbiriyle eşleşmiyor.';
-        setErrorMsg(err);
-        showToast('Şifre Hatası', err, 'error');
-        return;
-      }
-
-      const passCheck = validatePasswordStrict(passwords.new_password);
-      if (!passCheck.valid) {
-        const err = passCheck.message || 'Şifre kriterlere uygun değil.';
-        setErrorMsg(err);
-        showToast('Şifre Güvenlik Kriteri', err, 'error');
-        return;
-      }
-    }
-
     setLoading(true);
     try {
       const payload: UpdateProfileData = {
@@ -224,11 +160,6 @@ export default function DoctorProfilePage() {
         phone: phoneTrimmed,
       };
 
-      if (passwords.new_password) {
-        payload.current_password = passwords.current_password;
-        payload.new_password = passwords.new_password;
-      }
-
       const res = await updateDoctorProfile(payload);
       setDoctor(res.doctor);
       updateStoredDoctor(res.doctor);
@@ -238,11 +169,6 @@ export default function DoctorProfilePage() {
       const okMsg = 'Profil bilgileriniz başarıyla güncellendi.';
       setSuccessMsg(okMsg);
       showToast('Profil Güncellendi', okMsg, 'success');
-      setPasswords({
-        current_password: '',
-        new_password: '',
-        new_password_confirm: '',
-      });
     } catch (err: any) {
       const errMsg = err.message || 'Profil güncellenirken bir hata oluştu.';
       setErrorMsg(errMsg);
@@ -424,97 +350,12 @@ export default function DoctorProfilePage() {
                 <input
                   id="prof-email"
                   type="email"
-                  placeholder="doktor@mammoai.com"
+                  placeholder="doktor@mammovisionai.com"
                   value={formData.email}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   required
                 />
               </div>
-            </div>
-
-            {/* Şifre Değiştirme Bölümü */}
-            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <Shield size={18} color="#00766c" />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-                  Şifre Değiştir
-                </h3>
-              </div>
-
-              <div className="form-grid-2">
-                {/* Mevcut Şifre */}
-                <div className="form-group">
-                  <label htmlFor="prof-current-pass">Mevcut Şifre</label>
-                  <div className="input-with-icon">
-                    <input
-                      id="prof-current-pass"
-                      type={showCurrentPassword ? 'text' : 'password'}
-                      placeholder="Mevcut şifreniz"
-                      value={passwords.current_password}
-                      onChange={(e) => setPasswords({ ...passwords, current_password: e.target.value })}
-                      autoComplete="current-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowCurrentPassword((prev) => !prev)}
-                      aria-label={showCurrentPassword ? 'Mevcut şifreyi gizle' : 'Mevcut şifreyi göster'}
-                    >
-                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Yeni Şifre */}
-                <div className="form-group">
-                  <label htmlFor="prof-new-pass">Yeni Şifre</label>
-                  <div className="input-with-icon">
-                    <input
-                      id="prof-new-pass"
-                      type={showNewPassword ? 'text' : 'password'}
-                      placeholder="Yeni şifreniz"
-                      value={passwords.new_password}
-                      onChange={(e) => setPasswords({ ...passwords, new_password: e.target.value })}
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowNewPassword((prev) => !prev)}
-                      aria-label={showNewPassword ? 'Yeni şifreyi gizle' : 'Yeni şifreyi göster'}
-                    >
-                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Yeni Şifre Tekrar */}
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label htmlFor="prof-new-pass-confirm">Yeni Şifre Tekrar</label>
-                  <div className="input-with-icon">
-                    <input
-                      id="prof-new-pass-confirm"
-                      type={showNewPasswordConfirm ? 'text' : 'password'}
-                      placeholder="Yeni şifrenizi tekrar girin"
-                      value={passwords.new_password_confirm}
-                      onChange={(e) => setPasswords({ ...passwords, new_password_confirm: e.target.value })}
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowNewPasswordConfirm((prev) => !prev)}
-                      aria-label={showNewPasswordConfirm ? 'Yeni şifre tekrarını gizle' : 'Yeni şifre tekrarını göster'}
-                    >
-                      {showNewPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <p style={{ fontSize: 12.5, color: '#64748b', marginTop: 8, lineHeight: 1.4 }}>
-                * Şifreniz en az 8 karakter, 1 büyük harf (A-Z), 1 küçük harf (a-z), 1 sayı (0-9) ve 1 özel karakter içermelidir.
-              </p>
             </div>
 
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
@@ -528,6 +369,33 @@ export default function DoctorProfilePage() {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Şifre İşlemleri */}
+        <div className="profile-card" style={{ marginTop: 20, background: '#fff', borderRadius: 16, border: '1px solid #e2e8f0', padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ maxWidth: 540 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Shield size={20} color="#00766c" />
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
+                  Şifre İşlemleri
+                </h3>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
+                Şifrenizi güncellemek veya sıfırlamak için kayıtlı e-posta adresinize güvenli bir yenileme bağlantısı gönderilir.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate('/forgot-password')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', fontWeight: 600, fontSize: 13.5 }}
+            >
+              <KeyRound size={16} color="#00766c" />
+              <span>Şifre Sıfırlama Bağlantısı İste</span>
+            </button>
+          </div>
         </div>
 
         {/* Tehlikeli Bölge: Hesabı Sil */}

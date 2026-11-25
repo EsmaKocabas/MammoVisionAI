@@ -7,7 +7,7 @@ export interface AiPrediction {
     non_malignant: number; // 0-100
     malignant: number; // 0-100
   };
-  xai: {
+  gradcam: {
     method: string;
     target_class: string;
     target_layer: string;

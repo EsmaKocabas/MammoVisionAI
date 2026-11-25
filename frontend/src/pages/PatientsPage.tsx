@@ -373,9 +373,8 @@ export default function PatientsPage() {
                       </td>
                       <td>
                         <span
-                          className={`status-pill ${
-                            p.family_history_of_cancer ? 'high-risk' : 'low-risk'
-                          }`}
+                          className={`status-pill ${p.family_history_of_cancer ? 'high-risk' : 'low-risk'
+                            }`}
                         >
                           {p.family_history_of_cancer ? 'Ailede Kanser Var' : 'Risk Belirtisi Yok'}
                         </span>
@@ -622,14 +621,28 @@ export default function PatientsPage() {
 
                   <div className="form-group">
                     <label>Kan Grubu</label>
-                    <input
-                      type="text"
-                      maxLength={10}
+                    <select
                       value={editFormData.blood_type || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, blood_type: e.target.value })}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          blood_type: e.target.value
+                        })
+                      }
                       required
-                    />
+                    >
+                      <option value="">Kan grubu seçiniz</option>
+                      <option value="A Rh+">A Rh+</option>
+                      <option value="A Rh-">A Rh-</option>
+                      <option value="B Rh+">B Rh+</option>
+                      <option value="B Rh-">B Rh-</option>
+                      <option value="AB Rh+">AB Rh+</option>
+                      <option value="AB Rh-">AB Rh-</option>
+                      <option value="0 Rh+">0 Rh+</option>
+                      <option value="0 Rh-">0 Rh-</option>
+                    </select>
                   </div>
+
                   <div className="form-group">
                     <label>Adres</label>
                     <input
@@ -696,258 +709,276 @@ export default function PatientsPage() {
             )}
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Yeni Hasta Ekle Modalı (Detaylı Hata Gösterimi & Toast Bildirimi) */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-card" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
-                Yeni Hasta Kaydı
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal İçi Detaylı Hata Bildirimi */}
-            {modalError && (
-              <div className="alert-message error" style={{ marginBottom: 16 }}>
-                <AlertCircle size={18} />
-                <span>{modalError}</span>
+      {
+        showAddModal && (
+          <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+            <div className="modal-card" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
+                  Yeni Hasta Kaydı
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-            )}
 
-            <form onSubmit={handleCreatePatient}>
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label>TC Kimlik No (11 Hane)</label>
-                  <input
-                    type="text"
-                    maxLength={11}
-                    placeholder="12345678901"
-                    value={newPatient.tc_no}
-                    onChange={(e) => setNewPatient({ ...newPatient, tc_no: e.target.value.replace(/\D/g, '') })}
-                    required
-                  />
+              {/* Modal İçi Detaylı Hata Bildirimi */}
+              {modalError && (
+                <div className="alert-message error" style={{ marginBottom: 16 }}>
+                  <AlertCircle size={18} />
+                  <span>{modalError}</span>
                 </div>
-                <div className="form-group">
-                  <label>Cinsiyet</label>
-                  <select
-                    value={newPatient.gender}
-                    onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value as any })}
+              )}
+
+              <form onSubmit={handleCreatePatient}>
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>TC Kimlik No (11 Hane)</label>
+                    <input
+                      type="text"
+                      maxLength={11}
+                      placeholder="12345678901"
+                      value={newPatient.tc_no}
+                      onChange={(e) => setNewPatient({ ...newPatient, tc_no: e.target.value.replace(/\D/g, '') })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Cinsiyet</label>
+                    <select
+                      value={newPatient.gender}
+                      onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value as any })}
+                    >
+                      <option value="Kadın">Kadın</option>
+                      <option value="Erkek">Erkek</option>
+                      <option value="Diğer">Diğer</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Ad</label>
+                    <input
+                      type="text"
+                      placeholder="Örn: Ayşe"
+                      value={newPatient.first_name}
+                      onChange={(e) => setNewPatient({ ...newPatient, first_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Soyad</label>
+                    <input
+                      type="text"
+                      placeholder="Örn: Kaya"
+                      value={newPatient.last_name}
+                      onChange={(e) => setNewPatient({ ...newPatient, last_name: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Doğum Tarihi</label>
+                    <input
+                      type="date"
+                      value={newPatient.date_of_birth}
+                      onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Telefon</label>
+                    <input
+                      type="tel"
+                      placeholder="+905321234567"
+                      value={newPatient.phone}
+                      onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>E-posta</label>
+                    <input
+                      type="email"
+                      placeholder="hasta@example.com"
+                      value={newPatient.email}
+                      onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Kan Grubu</label>
+                    <select
+                      value={newPatient.blood_type}
+                      onChange={(e) =>
+                        setNewPatient({
+                          ...newPatient,
+                          blood_type: e.target.value
+                        })
+                      }
+                      required
+                    >
+                      <option value="">Kan grubu seçiniz</option>
+                      <option value="A Rh+">A Rh+</option>
+                      <option value="A Rh-">A Rh-</option>
+                      <option value="B Rh+">B Rh+</option>
+                      <option value="B Rh-">B Rh-</option>
+                      <option value="AB Rh+">AB Rh+</option>
+                      <option value="AB Rh-">AB Rh-</option>
+                      <option value="0 Rh+">0 Rh+</option>
+                      <option value="0 Rh-">0 Rh-</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label>Adres</label>
+                    <input
+                      type="text"
+                      placeholder="İlçe, İl"
+                      value={newPatient.address}
+                      onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Alerjiler</label>
+                    <input
+                      type="text"
+                      placeholder="Alerji yoksa 'Yok' yazınız"
+                      value={newPatient.allergies}
+                      onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Kronik Hastalıklar</label>
+                    <input
+                      type="text"
+                      placeholder="Hastalık yoksa 'Yok' yazınız"
+                      value={newPatient.chronic_diseases}
+                      onChange={(e) => setNewPatient({ ...newPatient, chronic_diseases: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                    <input
+                      id="family_cancer"
+                      type="checkbox"
+                      checked={newPatient.family_history_of_cancer}
+                      onChange={(e) => setNewPatient({ ...newPatient, family_history_of_cancer: e.target.checked })}
+                      style={{ width: 18, height: 18 }}
+                    />
+                    <label htmlFor="family_cancer" style={{ margin: 0, cursor: 'pointer' }}>
+                      Ailede meme kanseri veya ilişkili kanser öyküsü var
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setShowAddModal(false)}
                   >
-                    <option value="Kadın">Kadın</option>
-                    <option value="Erkek">Erkek</option>
-                    <option value="Diğer">Diğer</option>
-                  </select>
+                    İptal
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-new-analysis"
+                  >
+                    Hastayı Kaydet
+                  </button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
 
-                <div className="form-group">
-                  <label>Ad</label>
-                  <input
-                    type="text"
-                    placeholder="Örn: Ayşe"
-                    value={newPatient.first_name}
-                    onChange={(e) => setNewPatient({ ...newPatient, first_name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Soyad</label>
-                  <input
-                    type="text"
-                    placeholder="Örn: Kaya"
-                    value={newPatient.last_name}
-                    onChange={(e) => setNewPatient({ ...newPatient, last_name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Doğum Tarihi</label>
-                  <input
-                    type="date"
-                    value={newPatient.date_of_birth}
-                    onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Telefon</label>
-                  <input
-                    type="tel"
-                    placeholder="+905321234567"
-                    value={newPatient.phone}
-                    onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>E-posta</label>
-                  <input
-                    type="email"
-                    placeholder="hasta@example.com"
-                    value={newPatient.email}
-                    onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Kan Grubu</label>
-                  <input
-                    type="text"
-                    placeholder="Örn: A Rh+"
-                    value={newPatient.blood_type}
-                    onChange={(e) => setNewPatient({ ...newPatient, blood_type: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Adres</label>
-                  <input
-                    type="text"
-                    placeholder="İlçe, İl"
-                    value={newPatient.address}
-                    onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Alerjiler</label>
-                  <input
-                    type="text"
-                    placeholder="Alerji yoksa 'Yok' yazınız"
-                    value={newPatient.allergies}
-                    onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Kronik Hastalıklar</label>
-                  <input
-                    type="text"
-                    placeholder="Hastalık yoksa 'Yok' yazınız"
-                    value={newPatient.chronic_diseases}
-                    onChange={(e) => setNewPatient({ ...newPatient, chronic_diseases: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
-                  <input
-                    id="family_cancer"
-                    type="checkbox"
-                    checked={newPatient.family_history_of_cancer}
-                    onChange={(e) => setNewPatient({ ...newPatient, family_history_of_cancer: e.target.checked })}
-                    style={{ width: 18, height: 18 }}
-                  />
-                  <label htmlFor="family_cancer" style={{ margin: 0, cursor: 'pointer' }}>
-                    Ailede meme kanseri veya ilişkili kanser öyküsü var
-                  </label>
-                </div>
+      {/* Hasta Silme Onay Modalı - Sağına soluna tıklamalarda kapanmaz, sadece İptal ve Evet butonları etkilidir */}
+      {
+        patientToDelete && (
+          <div className="modal-overlay">
+            <div
+              className="modal-card"
+              style={{
+                maxWidth: 440,
+                textAlign: 'center',
+                padding: '28px 24px',
+                borderRadius: 16,
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: '50%',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}
+              >
+                <Trash2 size={26} strokeWidth={2.2} />
               </div>
 
-              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
+                Hasta Kaydını Sil
+              </h3>
+
+              <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.55 }}>
+                <strong style={{ color: '#1e293b' }}>{patientToDelete.name}</strong> isimli hastayı silmek istiyor musunuz?
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => setShowAddModal(false)}
+                  style={{
+                    minWidth: 96,
+                    padding: '9px 20px',
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                  }}
+                  onClick={() => {
+                    if (!deletingPatient) setPatientToDelete(null);
+                  }}
+                  disabled={deletingPatient}
                 >
                   İptal
                 </button>
                 <button
-                  type="submit"
-                  className="btn-new-analysis"
+                  type="button"
+                  className="btn-danger"
+                  style={{
+                    minWidth: 96,
+                    padding: '9px 20px',
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                  }}
+                  onClick={handleConfirmDeletePatient}
+                  disabled={deletingPatient}
                 >
-                  Hastayı Kaydet
+                  {deletingPatient ? 'Siliniyor...' : 'Evet'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Hasta Silme Onay Modalı - Sağına soluna tıklamalarda kapanmaz, sadece İptal ve Evet butonları etkilidir */}
-      {patientToDelete && (
-        <div className="modal-overlay">
-          <div
-            className="modal-card"
-            style={{
-              maxWidth: 440,
-              textAlign: 'center',
-              padding: '28px 24px',
-              borderRadius: 16,
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                width: 54,
-                height: 54,
-                borderRadius: '50%',
-                background: '#fee2e2',
-                color: '#dc2626',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-              }}
-            >
-              <Trash2 size={26} strokeWidth={2.2} />
-            </div>
-
-            <h3 style={{ margin: '0 0 10px', fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
-              Hasta Kaydını Sil
-            </h3>
-
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.55 }}>
-              <strong style={{ color: '#1e293b' }}>{patientToDelete.name}</strong> isimli hastayı silmek istiyor musunuz?
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-              <button
-                type="button"
-                className="btn-secondary"
-                style={{
-                  minWidth: 96,
-                  padding: '9px 20px',
-                  fontSize: 13.5,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                }}
-                onClick={() => {
-                  if (!deletingPatient) setPatientToDelete(null);
-                }}
-                disabled={deletingPatient}
-              >
-                İptal
-              </button>
-              <button
-                type="button"
-                className="btn-danger"
-                style={{
-                  minWidth: 96,
-                  padding: '9px 20px',
-                  fontSize: 13.5,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                }}
-                onClick={handleConfirmDeletePatient}
-                disabled={deletingPatient}
-              >
-                {deletingPatient ? 'Siliniyor...' : 'Evet'}
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

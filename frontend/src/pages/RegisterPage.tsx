@@ -194,7 +194,7 @@ export default function RegisterPage() {
                 id="reg-email"
                 type="email"
                 autoComplete="email"
-                placeholder="dr.aylin@mammoai.com"
+                placeholder="dr.aylin@mammovisionai.com"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 required

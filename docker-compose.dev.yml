@@ -1,0 +1,81 @@
+services:
+
+  # AI MODEL
+  ai-model:
+    build:
+      context: ./backend/ai_model
+      dockerfile: Dockerfile
+
+    container_name: mammovisionai-ai-dev
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # BACKEND
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+
+    container_name: mammovisionai-backend-dev
+    restart: unless-stopped
+
+    ports:
+      - "5001:5001"
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: 5001
+      NODE_ENV: development
+      AI_SERVICE_URL: http://ai-model:8000
+      AI_TIMEOUT_MS: 120000
+      CHOKIDAR_USEPOLLING: "true"
+
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads_data:/app/uploads
+
+    depends_on:
+      ai-model:
+        condition: service_healthy
+
+  # FRONTEND
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+
+    container_name: mammovisionai-frontend-dev
+    restart: unless-stopped
+
+    ports:
+      - "5173:5173"
+
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  uploads_data:

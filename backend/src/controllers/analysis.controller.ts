@@ -37,7 +37,7 @@ const ANALYSIS_SELECT = `
     a.id, a.protocol_no, a.status,
     a.malignancy_probability, a.risk_level, a.classification_label, a.model_confidence,
     a.classification_model, a.model_version,
-    a.xai_heatmap_url, a.xai_explanation,
+    a.gradcam_heatmap_url, a.gradcam_explanation,
     a.doctor_notes, a.final_decision, a.is_reviewed, a.reviewed_at,
     a.requested_at, a.completed_at,
     json_build_object(
@@ -149,7 +149,7 @@ export const createAnalysis = async (req: AuthRequest, res: Response): Promise<v
   try {
     const prediction = await requestPrediction(file.path, file.mimetype, file.originalname);
 
-    await fs.writeFile(heatmapPath, Buffer.from(prediction.xai.heatmap_base64, 'base64'));
+    await fs.writeFile(heatmapPath, Buffer.from(prediction.gradcam.heatmap_base64, 'base64'));
 
     const malignancyProbability = prediction.probabilities.malignant / 100;
     const isMalignant = prediction.prediction === 'malignant';
@@ -162,8 +162,8 @@ export const createAnalysis = async (req: AuthRequest, res: Response): Promise<v
          classification_label = $4,
          model_confidence = $5,
          model_version = $6,
-         xai_heatmap_url = $7,
-         xai_explanation = $8,
+         gradcam_heatmap_url = $7,
+         gradcam_explanation = $8,
          completed_at = NOW()
        WHERE id = $1`,
       [
@@ -175,7 +175,7 @@ export const createAnalysis = async (req: AuthRequest, res: Response): Promise<v
         // analyses.model_version VARCHAR(30)
         (process.env.MODEL_VERSION || 'efficientnet_b4_final_best').slice(0, 30),
         `/uploads/heatmaps/${heatmapFilename}`,
-        `${prediction.xai.method} (${prediction.xai.target_layer}) – hedef sınıf: ${prediction.xai.target_class}`,
+        `${prediction.gradcam.method} (${prediction.gradcam.target_layer}) – hedef sınıf: ${prediction.gradcam.target_class}`,
       ]
     );
   } catch (error) {
@@ -335,7 +335,7 @@ export const deleteAnalysis = async (req: AuthRequest, res: Response): Promise<v
 
   // Silmeden önce dosya yollarını al
   const existing = await pool.query(
-    `SELECT a.id, a.xai_heatmap_url, i.storage_url, a.image_id
+    `SELECT a.id, a.gradcam_heatmap_url, i.storage_url, a.image_id
      FROM analyses a
      JOIN mammography_images i ON i.id = a.image_id
      WHERE a.id = $1 AND a.doctor_id = $2`,
@@ -368,8 +368,8 @@ export const deleteAnalysis = async (req: AuthRequest, res: Response): Promise<v
     const mammoPath = path.join(UPLOADS_DIR, row.storage_url.replace(/^\/uploads\//, ''));
     await removeFile(mammoPath);
   }
-  if (row.xai_heatmap_url) {
-    const heatmapPath = path.join(UPLOADS_DIR, row.xai_heatmap_url.replace(/^\/uploads\//, ''));
+  if (row.gradcam_heatmap_url) {
+    const heatmapPath = path.join(UPLOADS_DIR, row.gradcam_heatmap_url.replace(/^\/uploads\//, ''));
     await removeFile(heatmapPath);
   }
 
@@ -409,7 +409,7 @@ export const getAnalysisReport = async (req: AuthRequest, res: Response): Promis
 
     const safeProtocol = (analysis.protocol_no || 'rapor').replace(/[^a-zA-Z0-9_-]/g, '_');
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="MammoXai_${safeProtocol}.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="MammoVisionAI_${safeProtocol}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     res.end(pdfBuffer);
   } catch (error) {

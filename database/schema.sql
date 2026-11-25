@@ -1,5 +1,5 @@
 -- ============================================================
--- MammoXai - PostgreSQL Veritabanı Şeması (NeonDB)
+-- MammoVisionAI - PostgreSQL Veritabanı Şeması (NeonDB)
 -- ============================================================
 -- Çalıştırma: psql bağlantısıyla ya da NeonDB SQL editörüyle
 -- ============================================================
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS patients (
     address         TEXT,
 
     -- Klinik Bilgiler
-    blood_type      VARCHAR(5),
+    blood_type      VARCHAR(10),
     allergies       TEXT,
     chronic_diseases TEXT,
     family_history_of_cancer BOOLEAN DEFAULT FALSE,
@@ -125,9 +125,9 @@ CREATE TABLE IF NOT EXISTS analyses (
     classification_model    VARCHAR(50) DEFAULT 'EfficientNet-B4',
     model_version           VARCHAR(30),                -- checkpoint/versiyon adı
 
-    -- XAI Çıktıları (Grad-CAM++)
-    xai_heatmap_url         TEXT,                       -- ısı haritası görüntüsünün URL'i
-    xai_explanation         TEXT,                       -- varsa metinsel açıklama
+    -- Grad-CAM++ Çıktıları (Isı Haritası & Model Açıklaması)
+    gradcam_heatmap_url     TEXT,                       -- ısı haritası görüntüsünün URL'i
+    gradcam_explanation     TEXT,                       -- varsa metinsel açıklama
 
     -- Doktor Notu / Klinik Karar
     doctor_notes            TEXT,

@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login, saveSession } from '../lib/api';
+import { login, saveSession, getRememberedEmail, saveRememberedEmail } from '../lib/api';
 import '../styles/auth.css';
-
 
 const ChevronIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -12,20 +11,32 @@ const ChevronIcon = () => (
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+
+  const [email, setEmail] = useState(getRememberedEmail());
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(
+    Boolean(getRememberedEmail())
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setError(null);
     setLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    const submittedEmail = String(formData.get('email') || '').trim();
+    const submittedPassword = String(formData.get('password') || '');
+
     try {
-      const { token, doctor } = await login(email.trim(), password);
+      const { token, doctor } = await login(submittedEmail, submittedPassword);
+
+      saveRememberedEmail(submittedEmail, remember);
       saveSession(token, doctor, remember);
+
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Giriş yapılamadı.');
@@ -38,32 +49,38 @@ export default function LoginPage() {
     <main className="login-page">
       <section className="login-card" aria-labelledby="login-title">
         <p className="login-eyebrow">Güvenli erişim</p>
-        <h1 id="login-title" className="login-title">Hesabınıza giriş yapın</h1>
+
+        <h1 id="login-title" className="login-title">
+          Hesabınıza giriş yapın
+        </h1>
+
         <p className="login-subtitle">
           Mamografi analiz paneline erişmek için doktor hesabınızla devam edin.
         </p>
 
-        <form className="login-form" onSubmit={handleSubmit} noValidate>
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="login-email">E-posta adresi</label>
+
             <input
               id="login-email"
+              name="email"
               type="email"
-              autoComplete="email"
-              placeholder="dr.aylin@mammoai.com"
+              autoComplete="username"
+              placeholder="dr.aylin@mammovisionai.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
-
-
           <div className="field">
             <label htmlFor="login-password">Şifre</label>
+
             <div className="input-with-icon">
               <input
                 id="login-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 placeholder="••••••••"
@@ -71,6 +88,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+
               <button
                 type="button"
                 className="password-toggle"
@@ -105,7 +123,14 @@ export default function LoginPage() {
                 id="login-remember"
                 type="checkbox"
                 checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setRemember(checked);
+
+                  if (!checked) {
+                    saveRememberedEmail('', false);
+                  }
+                }}
               />
               Beni hatırla
             </label>
@@ -113,7 +138,6 @@ export default function LoginPage() {
             <Link id="login-forgot" className="link" to="/forgot-password">
               Şifremi unuttum
             </Link>
-
           </div>
 
           {error && (
@@ -126,7 +150,7 @@ export default function LoginPage() {
             id="login-submit"
             type="submit"
             className="btn-primary"
-            disabled={loading || !email || !password}
+            disabled={loading}
           >
             {loading ? (
               <span className="spinner" aria-label="Giriş yapılıyor" />
