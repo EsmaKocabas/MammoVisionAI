@@ -31,9 +31,9 @@ export default defineConfig({
     },
   ],
 
-  // Start Vite before running Playwright tests
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1',
+    command: 'npm run dev -- --host 0.0.0.0',
+    cwd: './frontend',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
