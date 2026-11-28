@@ -115,9 +115,8 @@ class GradCAMPlusPlus:
         grads_3 = grads_2 * grads
         sum_acts = acts.sum(dim=(1, 2), keepdim=True)
 
-        denom = 2 * grads_2 + sum_acts * grads_3
-        denom = torch.where(denom != 0, denom, torch.ones_like(denom))
-        alpha = grads_2 / denom
+        denom = 2 * grads_2 + sum_acts * grads_3 + 1e-6
+        alpha = torch.where(grads != 0, grads_2 / denom, torch.zeros_like(grads_2))
 
         weights = (alpha * torch.relu(grads)).sum(dim=(1, 2))          # (K,)
         cam = torch.relu((weights[:, None, None] * acts).sum(dim=0))   # (h, w)
@@ -130,8 +129,8 @@ class GradCAMPlusPlus:
         return probs.cpu(), target_class, cam.cpu().numpy().astype(np.float32)
 
 
-# EfficientNet-B4'ün son evrişim bloğu (1792 kanal, 384px girişte 12x12)
-grad_cam = GradCAMPlusPlus(model, model.features[-1])
+# EfficientNet-B4'ün orta-üst evrişim bloğu (doku odaklı, köşe gürültüsüne dayanıklı)
+grad_cam = GradCAMPlusPlus(model, model.features[6])
 # Hook'lar paylaşımlı durum tuttuğu için eşzamanlı istekleri sıraya alıyoruz
 inference_lock = threading.Lock()
 
@@ -140,9 +139,16 @@ MAX_OUTPUT_SIDE = 2048
 
 
 def build_heatmap_overlay(original_rgb: np.ndarray, cam: np.ndarray, bbox: tuple) -> np.ndarray:
-    """Isı haritasını ROI kutusuna geri yerleştirip orijinal görüntünün üzerine bindirir (BGR döner)."""
+    """Isı haritasını ROI kutusuna geri yerleştirir, doku maskesi uygular ve orijinal görüntünün üzerine bindirir (BGR döner)."""
     x, y, w, h = bbox
     cam_roi = cv2.resize(cam, (w, h), interpolation=cv2.INTER_LINEAR)
+
+    # Arka plan siyah piksellerine ısı haritası taşmasını önlemek için doku maskesi uygula
+    roi_rgb = original_rgb[y:y+h, x:x+w]
+    roi_gray = cv2.cvtColor(roi_rgb, cv2.COLOR_RGB2GRAY) if len(roi_rgb.shape) == 3 else roi_rgb
+    _, tissue_mask = cv2.threshold(roi_gray, 15, 1, cv2.THRESH_BINARY)
+    cam_roi = cam_roi * tissue_mask.astype(np.float32)
+
     heat_roi = cv2.applyColorMap(np.uint8(255 * cam_roi), cv2.COLORMAP_JET)
 
     overlay = cv2.cvtColor(original_rgb, cv2.COLOR_RGB2BGR)
@@ -180,7 +186,7 @@ def run_analysis(image: Image.Image) -> dict:
         "gradcam": {
             "method": "Grad-CAM++",
             "target_class": class_names[target_class],
-            "target_layer": "features[-1]",
+            "target_layer": "features[6]",
             "roi_bbox": {"x": x, "y": y, "width": w, "height": h},
             "heatmap_mime_type": "image/jpeg",
             "heatmap_base64": base64.b64encode(buffer.tobytes()).decode("ascii")

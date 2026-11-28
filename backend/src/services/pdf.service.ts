@@ -1,7 +1,20 @@
+
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'node:module';
 import { UPLOADS_DIR } from '../config/paths.js';
+
+const require = createRequire(import.meta.url);
+
+// Türkçe karakter destekli DejaVu Sans fontları
+const fontRegular = require.resolve(
+  'dejavu-fonts-ttf/ttf/DejaVuSans.ttf'
+);
+
+const fontBold = require.resolve(
+  'dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf'
+);
 
 interface ReportData {
   analysis: {
@@ -48,7 +61,9 @@ interface ReportData {
   };
 }
 
-export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffer> => {
+export const generateAnalysisPdfBuffer = async (
+  data: ReportData
+): Promise<Buffer> => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -61,112 +76,272 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
     });
 
     const buffers: Buffer[] = [];
-    doc.on('data', (chunk) => buffers.push(chunk));
+
+    doc.on('data', (chunk: Buffer) => buffers.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
-    doc.on('error', (err) => reject(err));
-
-    // UTF-8 Türkçe desteği için platform font kontrolü (macOS, Windows, Linux)
-    const findFont = (candidates: string[], fallback: string): string => {
-      for (const p of candidates) {
-        if (fs.existsSync(p)) return p;
-      }
-      return fallback;
-    };
-
-    const fontRegular = findFont([
-      '/System/Library/Fonts/Supplemental/Arial.ttf',
-      '/Library/Fonts/Arial.ttf',
-      'C:\\Windows\\Fonts\\arial.ttf',
-      '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-      '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-    ], 'Helvetica');
-
-    const fontBold = findFont([
-      '/System/Library/Fonts/Supplemental/Arial Bold.ttf',
-      '/Library/Fonts/Arial Bold.ttf',
-      'C:\\Windows\\Fonts\\arialbd.ttf',
-      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-      '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-    ], 'Helvetica-Bold');
+    doc.on('error', (err: Error) => reject(err));
 
     const { analysis, doctor } = data;
     const patient = analysis.patient;
     const image = analysis.image;
 
     // ─── Header & Logo ───
-    doc.rect(40, 40, 515, 55).fill('#0f172a'); // Koyu lacivert başlık bandı
-    doc.fillColor('#ffffff').font(fontBold).fontSize(18).text('MAMMOVISIONAI', 55, 52);
-    doc.font(fontRegular).fontSize(9).fillColor('#94a3b8').text('Yapay Zeka Destekli Mamografi Analiz ve Grad-CAM++ Raporu', 55, 74);
+    doc.rect(40, 40, 515, 55).fill('#0f172a');
 
-    doc.font(fontBold).fontSize(10).fillColor('#38bdf8').text(`Protokol: ${analysis.protocol_no}`, 370, 52, { align: 'right', width: 170 });
-    const reportDate = analysis.completed_at ? new Date(analysis.completed_at).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR');
-    doc.font(fontRegular).fontSize(8).fillColor('#cbd5e1').text(`Rapor Tarihi: ${reportDate}`, 370, 72, { align: 'right', width: 170 });
+    doc
+      .fillColor('#ffffff')
+      .font(fontBold)
+      .fontSize(18)
+      .text('MAMMOVISIONAI', 55, 52);
+
+    doc
+      .font(fontRegular)
+      .fontSize(9)
+      .fillColor('#94a3b8')
+      .text(
+        'Yapay Zeka Destekli Mamografi Analiz ve Grad-CAM++ Raporu',
+        55,
+        74
+      );
+
+    doc
+      .font(fontBold)
+      .fontSize(10)
+      .fillColor('#38bdf8')
+      .text(`Protokol: ${analysis.protocol_no}`, 370, 52, {
+        align: 'right',
+        width: 170,
+      });
+
+    const reportDate = analysis.completed_at
+      ? new Date(analysis.completed_at).toLocaleDateString('tr-TR')
+      : new Date().toLocaleDateString('tr-TR');
+
+    doc
+      .font(fontRegular)
+      .fontSize(8)
+      .fillColor('#cbd5e1')
+      .text(`Rapor Tarihi: ${reportDate}`, 370, 72, {
+        align: 'right',
+        width: 170,
+      });
 
     let currentY = 110;
 
-    // ─── Hasta ve Hekim Bilgileri (2 Kolon) ───
+    // ─── Hasta ve Hekim Bilgileri ───
     const boxWidth = 250;
     const boxHeight = 85;
 
-    // Hasta Bilgileri Kutusu
-    doc.roundedRect(40, currentY, boxWidth, boxHeight, 6).lineWidth(1).stroke('#e2e8f0');
+    // Hasta Bilgileri
+    doc
+      .roundedRect(40, currentY, boxWidth, boxHeight, 6)
+      .lineWidth(1)
+      .stroke('#e2e8f0');
+
     doc.rect(40, currentY, boxWidth, 22).fill('#f1f5f9');
-    doc.fillColor('#1e293b').font(fontBold).fontSize(10).text('HASTA BİLGİLERİ', 50, currentY + 6);
-    
-    doc.font(fontRegular).fontSize(9).fillColor('#334155');
-    doc.text(`Adı Soyadı: ${patient.first_name} ${patient.last_name}`, 50, currentY + 28);
-    doc.text(`TC Kimlik No: ${patient.tc_no}`, 50, currentY + 44);
-    const dob = patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('tr-TR') : '-';
-    doc.text(`Doğum Tarihi: ${dob}  |  Cinsiyet: ${patient.gender ?? 'Kadın'}`, 50, currentY + 60);
 
-    // Hekim & Kurum Bilgileri Kutusu
+    doc
+      .fillColor('#1e293b')
+      .font(fontBold)
+      .fontSize(10)
+      .text('HASTA BİLGİLERİ', 50, currentY + 6);
+
+    doc
+      .font(fontRegular)
+      .fontSize(9)
+      .fillColor('#334155');
+
+    doc.text(
+      `Adı Soyadı: ${patient.first_name} ${patient.last_name}`,
+      50,
+      currentY + 28
+    );
+
+    doc.text(
+      `TC Kimlik No: ${patient.tc_no}`,
+      50,
+      currentY + 44
+    );
+
+    const dob = patient.date_of_birth
+      ? new Date(patient.date_of_birth).toLocaleDateString('tr-TR')
+      : '-';
+
+    doc.text(
+      `Doğum Tarihi: ${dob}  |  Cinsiyet: ${patient.gender ?? 'Kadın'}`,
+      50,
+      currentY + 60
+    );
+
+    // Hekim ve Kurum Bilgileri
     const rightBoxX = 305;
-    doc.roundedRect(rightBoxX, currentY, boxWidth, boxHeight, 6).lineWidth(1).stroke('#e2e8f0');
-    doc.rect(rightBoxX, currentY, boxWidth, 22).fill('#f1f5f9');
-    doc.fillColor('#1e293b').font(fontBold).fontSize(10).text('SORUMLU HEKİM & KURUM', rightBoxX + 10, currentY + 6);
 
-    doc.font(fontRegular).fontSize(9).fillColor('#334155');
-    const doctorTitle = [doctor.title, doctor.full_name].filter(Boolean).join(' ');
-    doc.text(`Hekim: ${doctorTitle}`, rightBoxX + 10, currentY + 28);
-    doc.text(`Uzmanlık: ${doctor.specialty || 'Radyoloji / Genel Cerrahi'}`, rightBoxX + 10, currentY + 44);
-    doc.text(`Hastane: ${doctor.hospital || 'MammoVisionAI Tıp Merkezi'}`, rightBoxX + 10, currentY + 60);
+    doc
+      .roundedRect(rightBoxX, currentY, boxWidth, boxHeight, 6)
+      .lineWidth(1)
+      .stroke('#e2e8f0');
+
+    doc.rect(rightBoxX, currentY, boxWidth, 22).fill('#f1f5f9');
+
+    doc
+      .fillColor('#1e293b')
+      .font(fontBold)
+      .fontSize(10)
+      .text('SORUMLU HEKİM & KURUM', rightBoxX + 10, currentY + 6);
+
+    doc
+      .font(fontRegular)
+      .fontSize(9)
+      .fillColor('#334155');
+
+    const doctorTitle = [doctor.title, doctor.full_name]
+      .filter(Boolean)
+      .join(' ');
+
+    doc.text(
+      `Hekim: ${doctorTitle}`,
+      rightBoxX + 10,
+      currentY + 28
+    );
+
+    doc.text(
+      `Uzmanlık: ${doctor.specialty || 'Radyoloji / Genel Cerrahi'}`,
+      rightBoxX + 10,
+      currentY + 44
+    );
+
+    doc.text(
+      `Hastane: ${doctor.hospital || 'MammoVisionAI Tıp Merkezi'}`,
+      rightBoxX + 10,
+      currentY + 60
+    );
 
     currentY += 100;
 
     // ─── AI Model Analiz Sonuçları ───
-    doc.roundedRect(40, currentY, 515, 105, 6).lineWidth(1).stroke('#cbd5e1');
+    doc
+      .roundedRect(40, currentY, 515, 105, 6)
+      .lineWidth(1)
+      .stroke('#cbd5e1');
+
     doc.rect(40, currentY, 515, 24).fill('#0284c7');
-    doc.fillColor('#ffffff').font(fontBold).fontSize(10).text('YAPAY ZEKA (AI) ANALİZ BULGULARI', 50, currentY + 7);
 
-    // Risk rengi belirleme
+    doc
+      .fillColor('#ffffff')
+      .font(fontBold)
+      .fontSize(10)
+      .text('YAPAY ZEKA (AI) ANALİZ BULGULARI', 50, currentY + 7);
+
     const risk = analysis.risk_level || 'Belirtilmedi';
-    let riskBg = '#22c55e'; // Yeşil
-    if (risk.includes('Yüksek')) riskBg = '#ef4444'; // Kırmızı
-    else if (risk.includes('İnceleniyor') || risk.includes('Orta')) riskBg = '#f59e0b'; // Turuncu
 
-    // Risk Rozeti
-    doc.roundedRect(400, currentY + 34, 140, 32, 4).fill(riskBg);
-    doc.fillColor('#ffffff').font(fontBold).fontSize(11).text(risk.toUpperCase(), 400, currentY + 44, { align: 'center', width: 140 });
+    let riskBg = '#22c55e';
 
-    doc.fillColor('#0f172a').font(fontBold).fontSize(9);
-    doc.text('Sınıflandırma Teşhisi:', 55, currentY + 36);
-    doc.font(fontRegular).text(analysis.classification_label || 'Normal / Malign bulgu yok', 180, currentY + 36);
+    if (risk.includes('Yüksek')) {
+      riskBg = '#ef4444';
+    } else if (
+      risk.includes('İnceleniyor') ||
+      risk.includes('Orta')
+    ) {
+      riskBg = '#f59e0b';
+    }
 
-    doc.font(fontBold).text('Malignite Olasılığı:', 55, currentY + 52);
-    const prob = analysis.malignancy_probability !== null ? `%${(Number(analysis.malignancy_probability) * 100).toFixed(1)}` : '-';
-    doc.font(fontRegular).text(prob, 180, currentY + 52);
+    doc
+      .roundedRect(400, currentY + 34, 140, 32, 4)
+      .fill(riskBg);
 
-    doc.font(fontBold).text('Model Güven Skoru:', 55, currentY + 68);
-    const conf = analysis.model_confidence !== null ? `%${(Number(analysis.model_confidence) * 100).toFixed(1)}` : '-';
-    doc.font(fontRegular).text(conf, 180, currentY + 68);
+    doc
+      .fillColor('#ffffff')
+      .font(fontBold)
+      .fontSize(11)
+      .text(risk.toLocaleUpperCase('tr-TR'), 400, currentY + 44, {
+        align: 'center',
+        width: 140,
+      });
 
-    doc.font(fontBold).text('Kullanılan Model & Yöntem:', 55, currentY + 84);
-    doc.font(fontRegular).text(`${analysis.classification_model || 'EfficientNet-B4'} | Grad-CAM++ Isı Haritası`, 180, currentY + 84);
+    doc
+      .fillColor('#0f172a')
+      .font(fontBold)
+      .fontSize(9);
+
+    doc.text(
+      'Sınıflandırma Teşhisi:',
+      55,
+      currentY + 36
+    );
+
+    doc
+      .font(fontRegular)
+      .text(
+        analysis.classification_label || 'Normal / Malign bulgu yok',
+        180,
+        currentY + 36,
+        { width: 205, lineBreak: false }
+      );
+
+    doc
+      .font(fontBold)
+      .text('Malignite Olasılığı:', 55, currentY + 52);
+
+    const prob =
+      analysis.malignancy_probability !== null &&
+        analysis.malignancy_probability !== undefined
+        ? `%${(
+          Number(analysis.malignancy_probability) * 100
+        ).toFixed(1)}`
+        : '-';
+
+    doc
+      .font(fontRegular)
+      .text(prob, 180, currentY + 52);
+
+    doc
+      .font(fontBold)
+      .text('Model Güven Skoru:', 55, currentY + 68);
+
+    const conf =
+      analysis.model_confidence !== null &&
+        analysis.model_confidence !== undefined
+        ? `%${(
+          Number(analysis.model_confidence) * 100
+        ).toFixed(1)}`
+        : '-';
+
+    doc
+      .font(fontRegular)
+      .text(conf, 180, currentY + 68);
+
+    // Model satırı diğer bilgilerle aynı hizada
+    doc
+      .font(fontBold)
+      .fontSize(9)
+      .text('Model / Yöntem:', 55, currentY + 84);
+
+    doc
+      .font(fontRegular)
+      .fontSize(9)
+      .text(
+        `${analysis.classification_model || 'EfficientNet-B4'} | Grad-CAM++ Isı Haritası`,
+        180,
+        currentY + 84,
+        {
+          width: 365,
+          lineBreak: false,
+        }
+      );
 
     currentY += 120;
 
-    // ─── Görüntüler (Orijinal Mamografi & Grad-CAM++ Isı Haritası) ───
-    doc.font(fontBold).fontSize(10).fillColor('#0f172a').text('GÖRSEL İNCELEME & GRAD-CAM++ ISI HARİTASI', 40, currentY);
+    // ─── Görüntüler ───
+    doc
+      .font(fontBold)
+      .fontSize(10)
+      .fillColor('#0f172a')
+      .text(
+        'GÖRSEL İNCELEME & GRAD-CAM++ ISI HARİTASI',
+        40,
+        currentY
+      );
+
     currentY += 16;
 
     const imgWidth = 245;
@@ -174,74 +349,228 @@ export const generateAnalysisPdfBuffer = async (data: ReportData): Promise<Buffe
 
     // Orijinal Mamografi
     let mammoRendered = false;
+
     if (image?.url) {
       const relativePath = image.url.replace(/^\/uploads\//, '');
       const fullPath = path.join(UPLOADS_DIR, relativePath);
+
       if (fs.existsSync(fullPath)) {
         try {
-          doc.image(fullPath, 40, currentY, { fit: [imgWidth, imgHeight], align: 'center', valign: 'center' });
+          doc.image(fullPath, 40, currentY, {
+            fit: [imgWidth, imgHeight],
+            align: 'center',
+            valign: 'center',
+          });
+
           mammoRendered = true;
         } catch {
-          // dosya bozuk veya okunamıyorsa fallback kutusu
+          // Görüntü okunamazsa yedek kutu gösterilir.
         }
       }
     }
-    if (!mammoRendered) {
-      doc.roundedRect(40, currentY, imgWidth, imgHeight, 4).lineWidth(1).stroke('#e2e8f0');
-      doc.fillColor('#94a3b8').font(fontRegular).fontSize(9).text('Mamografi Görüntüsü', 40, currentY + 70, { align: 'center', width: imgWidth });
-    }
-    doc.fillColor('#475569').font(fontRegular).fontSize(8).text('Orijinal Mamografi Görüntüsü', 40, currentY + imgHeight + 4, { align: 'center', width: imgWidth });
 
-    // Isı Haritası
+    if (!mammoRendered) {
+      doc
+        .roundedRect(40, currentY, imgWidth, imgHeight, 4)
+        .lineWidth(1)
+        .stroke('#e2e8f0');
+
+      doc
+        .fillColor('#94a3b8')
+        .font(fontRegular)
+        .fontSize(9)
+        .text('Mamografi Görüntüsü', 40, currentY + 70, {
+          align: 'center',
+          width: imgWidth,
+        });
+    }
+
+    doc
+      .fillColor('#475569')
+      .font(fontRegular)
+      .fontSize(8)
+      .text(
+        'Orijinal Mamografi Görüntüsü',
+        40,
+        currentY + imgHeight + 4,
+        {
+          align: 'center',
+          width: imgWidth,
+        }
+      );
+
+    // Grad-CAM++ Isı Haritası
     let heatmapRendered = false;
-    const heatmapUrl = analysis?.gradcam_heatmap_url;
+
+    const heatmapUrl = analysis.gradcam_heatmap_url;
+
     if (heatmapUrl) {
       const relativePath = heatmapUrl.replace(/^\/uploads\//, '');
       const fullPath = path.join(UPLOADS_DIR, relativePath);
+
       if (fs.existsSync(fullPath)) {
         try {
-          doc.image(fullPath, 310, currentY, { fit: [imgWidth, imgHeight], align: 'center', valign: 'center' });
+          doc.image(fullPath, 310, currentY, {
+            fit: [imgWidth, imgHeight],
+            align: 'center',
+            valign: 'center',
+          });
+
           heatmapRendered = true;
         } catch {
-          // fallback
+          // Isı haritası okunamazsa yedek kutu gösterilir.
         }
       }
     }
+
     if (!heatmapRendered) {
-      doc.roundedRect(310, currentY, imgWidth, imgHeight, 4).lineWidth(1).stroke('#e2e8f0');
-      doc.fillColor('#94a3b8').font(fontRegular).fontSize(9).text('Grad-CAM++ Isı Haritası', 310, currentY + 70, { align: 'center', width: imgWidth });
+      doc
+        .roundedRect(310, currentY, imgWidth, imgHeight, 4)
+        .lineWidth(1)
+        .stroke('#e2e8f0');
+
+      doc
+        .fillColor('#94a3b8')
+        .font(fontRegular)
+        .fontSize(9)
+        .text('Grad-CAM++ Isı Haritası', 310, currentY + 70, {
+          align: 'center',
+          width: imgWidth,
+        });
     }
-    doc.fillColor('#475569').font(fontRegular).fontSize(8).text('Grad-CAM++ Odak Haritası', 310, currentY + imgHeight + 4, { align: 'center', width: imgWidth });
+
+    doc
+      .fillColor('#475569')
+      .font(fontRegular)
+      .fontSize(8)
+      .text(
+        'Grad-CAM++ Odak Haritası',
+        310,
+        currentY + imgHeight + 4,
+        {
+          align: 'center',
+          width: imgWidth,
+        }
+      );
 
     currentY += imgHeight + 25;
 
-    // ─── Doktor Klinik Değerlendirmesi & Kararı ───
-    doc.roundedRect(40, currentY, 515, 80, 6).lineWidth(1).stroke('#cbd5e1');
-    doc.rect(40, currentY, 515, 20).fill('#334155');
-    doc.fillColor('#ffffff').font(fontBold).fontSize(9).text('HEKİM KLİNİK DEĞERLENDİRMESİ VE NİHAİ KARAR', 50, currentY + 5);
+    // ─── Hekimin Klinik Değerlendirmesi ───
+    const clinicalHeight = 112;
 
-    doc.fillColor('#0f172a').font(fontBold).fontSize(9);
-    doc.text('Klinik Karar:', 50, currentY + 28);
-    const decisionText = analysis.final_decision || (analysis.is_reviewed ? 'İncelendi' : 'Henüz Değerlendirilmedi');
-    doc.font(fontRegular).text(decisionText, 130, currentY + 28);
+    doc
+      .roundedRect(40, currentY, 515, clinicalHeight, 6)
+      .lineWidth(1)
+      .stroke('#cbd5e1');
 
-    doc.font(fontBold).text('Hekim Notu:', 50, currentY + 44);
-    const notesText = analysis.doctor_notes || 'Klinik not girilmedi.';
-    doc.font(fontRegular).text(notesText, 130, currentY + 44, { width: 400 });
+    doc
+      .rect(40, currentY, 515, 22)
+      .fill('#334155');
 
-    const reviewDate = analysis.reviewed_at ? new Date(analysis.reviewed_at).toLocaleDateString('tr-TR') : '-';
-    doc.font(fontRegular).fontSize(8).fillColor('#64748b').text(`Değerlendirme Tarihi: ${reviewDate}`, 50, currentY + 64);
+    doc
+      .fillColor('#ffffff')
+      .font(fontBold)
+      .fontSize(9)
+      .text(
+        'HEKİMİN NİHAİ DEĞERLENDİRMESİ VE KARARI',
+        50,
+        currentY + 6
+      );
 
-    currentY += 95;
+    // Klinik karar alanı
+    doc
+      .fillColor('#0f172a')
+      .font(fontBold)
+      .fontSize(9)
+      .text('Klinik Karar:', 50, currentY + 32);
+
+    doc
+      .moveTo(130, currentY + 45)
+      .lineTo(540, currentY + 45)
+      .lineWidth(0.6)
+      .strokeColor('#94a3b8')
+      .stroke();
+
+    // Hekim notu alanı
+    doc
+      .font(fontBold)
+      .fontSize(9)
+      .fillColor('#0f172a')
+      .text('Hekim Notu:', 50, currentY + 54);
+
+    doc
+      .moveTo(130, currentY + 68)
+      .lineTo(540, currentY + 68)
+      .strokeColor('#94a3b8')
+      .stroke();
+
+    doc
+      .moveTo(50, currentY + 82)
+      .lineTo(540, currentY + 82)
+      .stroke();
+
+    // İmza alanı
+    doc
+      .font(fontBold)
+      .fontSize(8)
+      .fillColor('#334155')
+      .text('Hekim Adı / İmza:', 50, currentY + 94);
+
+    doc
+      .moveTo(135, currentY + 105)
+      .lineTo(320, currentY + 105)
+      .strokeColor('#94a3b8')
+      .stroke();
+
+    doc
+      .font(fontBold)
+      .fontSize(8)
+      .text('Tarih:', 365, currentY + 94);
+
+    doc
+      .moveTo(395, currentY + 105)
+      .lineTo(540, currentY + 105)
+      .stroke();
+
+    currentY += clinicalHeight + 15;
 
     // ─── Footer / Yasal Uyarı ───
-    doc.rect(40, 780, 515, 0.5).fill('#cbd5e1');
-    doc.font(fontRegular).fontSize(7).fillColor('#94a3b8').text(
-      'YASAL UYARI: Bu rapor MammoVisionAI yapay zeka karar destek sistemi tarafından üretilmiştir. Kesin tanı yerine geçmez; sonuçlar uzman hekim tarafından klinik bulgular ve biyopsi/tetkiklerle birlikte değerlendirilmelidir.',
-      40,
-      787,
-      { align: 'center', width: 515 }
-    );
+    // Footer sabit konumda; ikinci sayfaya taşmaması için
+    // kısa iki satır halinde yerleştirilmiştir.
+    doc
+      .moveTo(40, 750)
+      .lineTo(555, 750)
+      .lineWidth(0.5)
+      .strokeColor('#cbd5e1')
+      .stroke();
+
+    doc
+      .font(fontRegular)
+      .fontSize(7)
+      .fillColor('#94a3b8')
+      .text(
+        'YASAL UYARI: Bu rapor MammoVisionAI yapay zeka karar destek sistemi tarafından oluşturulmuştur. Kesin tanı yerine geçmez.',
+        40,
+        760,
+        {
+          width: 515,
+          lineBreak: false,
+        }
+      );
+
+    doc
+      .font(fontRegular)
+      .fontSize(7)
+      .fillColor('#94a3b8')
+      .text(
+        'Nihai klinik değerlendirme ve karar sorumlu hekim tarafından verilmelidir.',
+        40,
+        772,
+        {
+          width: 515,
+          lineBreak: false,
+        }
+      );
 
     doc.end();
   });

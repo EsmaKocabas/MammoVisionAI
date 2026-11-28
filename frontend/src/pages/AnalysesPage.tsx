@@ -7,19 +7,35 @@ import {
   X,
   FileCheck2,
   Layers,
+  Download,
 } from 'lucide-react';
 import {
   fetchAnalyses,
+  downloadAnalysisReport,
   type AnalysisItem,
 } from '../lib/api';
+import { useToast } from '../components/ToastContext';
 import '../styles/dashboard.css';
 
 export default function AnalysesPage() {
+  const { showToast } = useToast();
   const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'high' | 'pending' | 'low'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisItem | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async (analysis: AnalysisItem) => {
+    setDownloadingPdf(true);
+    try {
+      await downloadAnalysisReport(analysis.id, analysis.protocol_no);
+    } catch (err: any) {
+      showToast('PDF İndirme Hatası', err?.message || 'PDF raporu indirilemedi.', 'error');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -284,6 +300,60 @@ export default function AnalysesPage() {
                 </div>
               </div>
 
+              {/* Grad-CAM++ Isı Haritası Görüntüsü */}
+              {(selectedAnalysis.gradcam_heatmap_url) && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: '#0f172a', marginBottom: 10 }}>
+                    <Layers size={16} color="#00766c" />
+                    <span>Grad-CAM++ Görsel Odak Haritası</span>
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: selectedAnalysis.image?.url ? '1fr 1fr' : '1fr',
+                      gap: 10,
+                    }}
+                  >
+                    {selectedAnalysis.image?.url && (
+                      <div style={{ textAlign: 'center' }}>
+                        <img
+                          src={selectedAnalysis.image.url}
+                          alt="Orijinal Mamografi"
+                          style={{
+                            width: '100%',
+                            borderRadius: 8,
+                            border: '1px solid #e2e8f0',
+                            objectFit: 'contain',
+                            background: '#0f172a',
+                            maxHeight: 240,
+                            display: 'block',
+                          }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>Orijinal Mamografi</p>
+                      </div>
+                    )}
+                    <div style={{ textAlign: 'center' }}>
+                      <img
+                        src={selectedAnalysis.gradcam_heatmap_url}
+                        alt="Grad-CAM++ Isı Haritası"
+                        style={{
+                          width: '100%',
+                          borderRadius: 8,
+                          border: '1px solid #e2e8f0',
+                          objectFit: 'contain',
+                          background: '#0f172a',
+                          maxHeight: 240,
+                          display: 'block',
+                        }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <p style={{ margin: '4px 0 0', fontSize: 11, color: '#64748b' }}>Grad-CAM++ Odak Haritası</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {selectedAnalysis.gradcam_explanation && (
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>
@@ -309,7 +379,16 @@ export default function AnalysesPage() {
               )}
             </div>
 
-            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                className="btn-new-analysis"
+                disabled={downloadingPdf}
+                onClick={() => handleDownloadPdf(selectedAnalysis)}
+              >
+                <Download size={16} />
+                <span>{downloadingPdf ? 'PDF Hazırlanıyor...' : 'PDF İndir'}</span>
+              </button>
               <button
                 type="button"
                 className="btn-secondary"

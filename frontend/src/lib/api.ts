@@ -310,6 +310,38 @@ export const createAnalysis = (formData: FormData) =>
     body: formData,
   });
 
+export const downloadAnalysisReport = async (id: string, protocolNo?: string): Promise<void> => {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  let response: Response;
+  try {
+    response = await fetch(`/api/analyses/${id}/report`, { headers });
+  } catch {
+    throw new ApiError('Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.', 0);
+  }
+
+  if (!response.ok) {
+    if (response.status === 401 && token) clearSession();
+    const data = await response.json().catch(() => ({}));
+    throw new ApiError(data.error || 'PDF raporu indirilemedi.', response.status);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const safeProtocol = (protocolNo || 'rapor').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `MammoVisionAI_${safeProtocol}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);;
+};
+
 // --- BİLDİRİMLER (NOTIFICATIONS) ---
 export interface AppNotification {
   id: string;
